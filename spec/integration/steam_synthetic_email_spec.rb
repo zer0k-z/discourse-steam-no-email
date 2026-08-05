@@ -101,6 +101,21 @@ describe "Steam OpenID 2.0 with a synthetic email" do
       expect(user).to be_active
     end
 
+    it "accepts an address the user typed themselves" do
+      complete_steam_callback
+
+      post "/u.json", params: { username: "SteamyPlayer", email: "player@example.com" }
+
+      expect(response.parsed_body["success"]).to eq(true)
+      user = User.find_by(username: "SteamyPlayer")
+      expect(user.email).to eq("player@example.com")
+      # Steam vouched for the identity, not the address, so the account waits
+      # on the activation email rather than starting out active.
+      expect(user).not_to be_active
+      expect(user.password_required?).to eq(false)
+      expect(UserAssociatedAccount.exists?(provider_name: "steam", user_id: user.id)).to eq(true)
+    end
+
     it "refuses a signup naming a steamid the request did not authenticate as" do
       complete_steam_callback
 

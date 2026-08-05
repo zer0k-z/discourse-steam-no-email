@@ -50,12 +50,22 @@ after_initialize do
       # Intercept ::UsersController#create to assign a synthetic email if the user left the field blank.
       # This allows signup to complete without a real address.
       def create
-        if params[:email].blank?
-          # Key type depends on how far the session has been round-tripped.
-          authentication = server_session[:authentication]
-          supplied = authentication && (authentication["email"] || authentication[:email])
+        # Key type depends on how far the session has been round-tripped.
+        authentication = server_session[:authentication]
+        supplied = authentication.is_a?(Hash) && (authentication["email"] || authentication[:email])
 
-          params[:email] = supplied if supplied.to_s.end_with?(SYNTHETIC_EMAIL_DOMAIN)
+        if ::DiscourseSteamNoEmail.synthetic_email?(supplied)
+          if params[:email].blank?
+            params[:email] = supplied
+          elsif !::DiscourseSteamNoEmail.synthetic_email?(params[:email])
+            # The user typed an address of their own. Steam vouched for their
+            # identity but not for that address so core will reject it.
+            # We need to downgrade the authentication so core will require them to verify it.
+            downgraded = authentication.with_indifferent_access
+            downgraded[:email_valid] = false
+            downgraded[:skip_email_validation] = false
+            server_session[:authentication] = downgraded.to_h
+          end
         end
 
         super
