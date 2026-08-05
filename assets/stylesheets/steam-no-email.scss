@@ -13,3 +13,14 @@
     display: contents;
   }
 }
+
+// The connector renders no visible content — it's only a marker for :has()
+// to detect. Scoped to the panel rather than the row, so it can't ever match
+// itself the way a row-scoped :has() check would (the marker isn't a
+// descendant of the row it needs to hide, it's a sibling connector).
+#collapsed-info-panel:has(.steam-placeholder-profile-email) {
+  dt.email,
+  dd.email {
+    display: none;
+  }
+}
