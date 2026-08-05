@@ -1,0 +1,15 @@
+.steam-optional-email {
+  display: block;
+}
+
+.user-preferences:has(.steam-placeholder-email) {
+  .pref-email {
+    display: none;
+  }
+
+  // The outlet wraps its connectors in a span, which would leave the
+  // replacement row inline.
+  span:has(> .steam-placeholder-email) {
+    display: contents;
+  }
+}
