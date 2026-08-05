@@ -33,6 +33,7 @@ There's no email to type into the standard "create the first admin" installer fl
 
 ## Note
 
+- Tested on Discourse v2026.1.4.
 - Invite-by-email is broken while Steam is the only login method: the invite page requires the authenticated account's email to match the invited address (`invites/show.js` `emailValidation`), but this plugin always supplies a synthetic one, so they never match and the signup form doesn't even render (`shouldDisplayForm`). Invite-by-link is unaffected and works normally.
-- The admin user list and other staff-only views still show `@steam.invalid` addresses as-is — this is expected, not a bug, but staff should know what they're looking at.
+- The admin user list and other staff-only views still show `@steam.invalid` addresses as-is.
 - `allowed_email_domains` / `blocked_email_domains` interaction with the `steam.invalid` domain hasn't been tested.
