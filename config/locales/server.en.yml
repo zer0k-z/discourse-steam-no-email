@@ -1,0 +1,4 @@
+en:
+  steam_no_email:
+    no_address_to_activate: "No email address found."
+    reserved_address: "Invalid email address."

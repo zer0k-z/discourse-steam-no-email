@@ -76,6 +76,54 @@ after_initialize do
   ::UsersController.prepend(::DiscourseSteamNoEmail::AssignPlaceholderEmail)
 
   module ::DiscourseSteamNoEmail
+    module ActivationEmailGuard
+      def update_activation_email
+        if ::DiscourseSteamNoEmail.synthetic_email?(params[:email])
+          return(render_json_error(I18n.t("steam_no_email.reserved_address"), status: 422))
+        end
+
+        super
+      end
+    end
+  end
+
+  ::UsersController.prepend(::DiscourseSteamNoEmail::ActivationEmailGuard)
+
+  module ::DiscourseSteamNoEmail
+    module ResendActivationGuard
+      def send_activation_email
+        user_key = session[::SessionController::ACTIVATE_USER_KEY]
+        user = ::User.find_by(id: user_key.to_i) if user_key.present?
+
+        if user && ::DiscourseSteamNoEmail.synthetic_email?(user.email)
+          return(render_json_error(I18n.t("steam_no_email.no_address_to_activate"), status: 422))
+        end
+
+        super
+      end
+    end
+  end
+
+  ::UsersController.prepend(::DiscourseSteamNoEmail::ResendActivationGuard)
+
+  module ::DiscourseSteamNoEmail
+    module SignupDestination
+      def to_client_hash
+        hash = super
+
+        if hash.is_a?(Hash) && !user &&
+             hash[:destination_url].to_s.chomp("/") == ::Discourse.base_path("/").chomp("/")
+          hash = hash.except(:destination_url)
+        end
+
+        hash
+      end
+    end
+  end
+
+  ::Auth::Result.prepend(::DiscourseSteamNoEmail::SignupDestination)
+
+  module ::DiscourseSteamNoEmail
     module PlaceholderEmailChange
       # Allow users to change away from a synthetic email without needing to verify it first.
       def change_to(email, add: false)

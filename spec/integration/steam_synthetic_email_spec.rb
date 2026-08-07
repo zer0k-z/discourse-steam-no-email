@@ -135,4 +135,22 @@ describe "Steam OpenID 2.0 with a synthetic email" do
     expect(authentication_data[:email_valid]).to eq(true)
     expect(authentication_data[:username]).to eq("SteamyPlayer")
   end
+
+  it "leaves signup without a root destination, so it can show the activation notice" do
+    # With one present the client redirects there instead of falling back to
+    # /u/account-created, where the "check your email" message lives.
+    expect(complete_steam_callback).not_to have_key(:destination_url)
+  end
+
+  it "shows the activation message once an unactivated account has been created" do
+    UsersController.any_instance.stubs(:honeypot_or_challenge_fails?).returns(false)
+    complete_steam_callback
+
+    post "/u.json", params: { username: "SteamyPlayer", email: "player@example.com" }
+    get "/u/account-created"
+
+    expect(response.status).to eq(200)
+    expect(response.body).to include("player@example.com")
+    expect(response.body).not_to include(I18n.t("activation.missing_session"))
+  end
 end
